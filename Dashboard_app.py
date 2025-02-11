@@ -11,7 +11,7 @@ fos_data_file = st.sidebar.file_uploader("Upload FOS Master Details", type=['xls
 
 # Read data only if files are uploaded
 device_order_data = pd.read_excel(device_order_data_file) if device_order_data_file else None
-fos_data = pd.read_excel(fos_data_file) if fos_data_file else None
+fos_data = pd.read_excel(fos_data_file,sheet_name='FOS Master Details') if fos_data_file else None
 
 if device_order_data is not None and fos_data is not None:
     st.sidebar.header("Filters")
@@ -114,33 +114,40 @@ if device_order_data is not None and fos_data is not None:
                              'TID_Generation_Pending':[active_merchant_mis['TID_Generation_Pending'].sum()],
                              'Pending_Installation':[active_merchant_mis['Pending_Installation'].sum()]}, index=[('Total')])
         active_merchant_mis = pd.concat([active_merchant_mis, total_row])
-        st.subheader('MIS Summary')
-        st.dataframe(active_merchant_mis)
-        
-        grouped_df = device_order_data.groupby(by=['BH_Name', 'Reporting Manager']).agg(
-            FOS_with_lead=('fos_id', 'nunique'),
-            Login_count=('Reporting Manager', 'count')
-        ).reset_index()
-        
-        grp_data_1 = fos_data.groupby(by=['BH_Name', 'Reporting Manager']).agg(Total_FOS=('Name of the FOS', 'nunique'))
-        final_data = pd.merge(left=grp_data_1, right=grouped_df, on=['BH_Name', 'Reporting Manager'], how='left')
-        final_data['%FOS With Lead Entry'] = round((final_data['FOS_with_lead'] / final_data['Login_count']) * 100, 0)
-        final_data.fillna(0, inplace=True)
-        
-        subtotal = final_data.groupby('BH_Name')[['Total_FOS', 'FOS_with_lead', 'Login_count']].sum().reset_index()
-        subtotal['Reporting Manager'] = 'Subtotal'
-        subtotal['%FOS With Lead Entry'] = round((subtotal['FOS_with_lead'] / subtotal['Login_count']) * 100, 0)
-        subtotal.fillna(0, inplace=True)
-        
-        final_data_with_subtotals = pd.concat([final_data, subtotal], ignore_index=True)
-        final_data_with_subtotals['Sort_Key'] = final_data_with_subtotals['Reporting Manager'].apply(lambda x: 1 if x == 'Subtotal' else 0)
-        final_data_with_subtotals.sort_values(by=['BH_Name', 'Sort_Key', 'Reporting Manager'], ascending=[True, True, True], inplace=True)
-        final_data_with_subtotals.drop(columns=['Sort_Key'], inplace=True)
-        final_data_with_subtotals.reset_index(drop=True, inplace=True)
-        
-        st.subheader('Adoption Summary')
-        st.dataframe(final_data_with_subtotals)
-        
-        st.subheader('Device Order Summary Raw Data')
-        st.dataframe(device_mis)
     
+    st.subheader('MIS Summary')
+    st.dataframe(active_merchant_mis)
+    
+    grouped_df = device_order_data.groupby(by=['BH_Name', 'Reporting Manager']).agg(
+        FOS_with_lead=('fos_id', 'nunique'),
+        Login_count=('Reporting Manager', 'count')
+    ).reset_index()
+    
+    grp_data_1 = fos_data.groupby(by=['BH_Name', 'Reporting Manager']).agg(Total_FOS=('Name of the FOS', 'nunique'))
+    final_data = pd.merge(left=grp_data_1, right=grouped_df, on=['BH_Name', 'Reporting Manager'], how='left')
+    final_data['%FOS With Lead Entry'] = round((final_data['FOS_with_lead'] / final_data['Login_count']) * 100, 0)
+    final_data.fillna(0, inplace=True)
+    
+    subtotal = final_data.groupby('BH_Name')[['Total_FOS', 'FOS_with_lead', 'Login_count']].sum().reset_index()
+    subtotal['Reporting Manager'] = 'Subtotal'
+    subtotal['%FOS With Lead Entry'] = round((subtotal['FOS_with_lead'] / subtotal['Login_count']) * 100, 0)
+    subtotal.fillna(0, inplace=True)
+    
+    final_data_with_subtotals = pd.concat([final_data, subtotal], ignore_index=True)
+    final_data_with_subtotals['Sort_Key'] = final_data_with_subtotals['Reporting Manager'].apply(lambda x: 1 if x == 'Subtotal' else 0)
+    final_data_with_subtotals.sort_values(by=['BH_Name', 'Sort_Key', 'Reporting Manager'], ascending=[True, True, True], inplace=True)
+    final_data_with_subtotals.drop(columns=['Sort_Key'], inplace=True)
+    final_data_with_subtotals.reset_index(drop=True, inplace=True)
+    
+    final_data_selection = final_data_with_subtotals[
+    ((final_data_with_subtotals["BH_Name"].isin(bh) & final_data_with_subtotals["Reporting Manager"].isin(reporting_manager)) |
+    (final_data_with_subtotals["Reporting Manager"] == "Subtotal"))
+    & ~(final_data_with_subtotals["BH_Name"] == "Test")  # Exclude 'Test' BH
+    ]
+
+
+    st.subheader('Adoption Summary')
+    st.dataframe(final_data_selection)
+    
+    st.subheader('Device Order Summary Raw Data')
+    st.dataframe(device_mis)
