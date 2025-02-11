@@ -11,7 +11,7 @@ st.sidebar.header("Upload Files")
 device_order_data= st.sidebar.file_uploader("Upload Device Order Summary", type=['xls', 'xlsx'])
 fos_data = st.sidebar.file_uploader("Upload FOS Master Details", type=['xls', 'xlsx'])
 #st.set_page_config(page_title='Sales Dashboard',layout='wide')
-device_order_data=pd.read_excel("C:/Users/akil.kumarb/Documents/Python Projects/Device Order Summary 11-2-25.xlsx")
+#device_order_data=pd.read_excel("C:/Users/akil.kumarb/Documents/Python Projects/Device Order Summary 11-2-25.xlsx")
 
 ## Sidebar------------ 
 st.sidebar.header("Filters")
@@ -160,7 +160,7 @@ grouped_df=device_order_data.groupby(by=['BH_Name','Reporting Manager']).agg(FOS
                                                                              Login_count=pd.NamedAgg(column='Reporting Manager', aggfunc='count'))
 
 grouped_df=grouped_df.reset_index()
-fos_data=pd.read_excel("C:/Users/akil.kumarb/Documents/Python Projects/Razorpay Agent App.xlsx",sheet_name='FOS Master Details')
+#fos_data=pd.read_excel("C:/Users/akil.kumarb/Documents/Python Projects/Razorpay Agent App.xlsx",sheet_name='FOS Master Details')
 grp_data_1=fos_data.groupby(by=['BH_Name','Reporting Manager']).agg(Total_FOS=pd.NamedAgg(column='Name of the FOS', aggfunc='nunique'))
 final_data=pd.merge(left=grp_data_1,right=grouped_df,on=['BH_Name','Reporting Manager'],how='left')
 final_data=final_data[['BH_Name','Reporting Manager','Total_FOS','FOS_with_lead','Login_count']]
