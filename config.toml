@@ -1,0 +1,14 @@
+[theme]
+base="light"  # Options: "light" or "dark"
+primaryColor="#2C3E50"  # Deep blue for a professional look
+backgroundColor="#F8F9FA"  # Light gray background for a clean UI
+secondaryBackgroundColor="#E9ECEF"  # Subtle gray for sidebars and sections
+textColor="#2C3E50"  # Dark grayish-blue for readability
+font="sans serif"  # Use professional sans-serif fonts
+
+[server]
+headless = true
+port = 8501
+
+[global]
+disableWatchdogWarning = true
