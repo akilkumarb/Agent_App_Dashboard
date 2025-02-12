@@ -1,17 +1,72 @@
+import os
 import pandas as pd
-import numpy as np
-import plotly.express as px
 import streamlit as st
+from datetime import datetime
 
+# List of allowed email IDs for uploading
+ALLOWED_EMAILS = ["akil.kumarb@razorpay.com", "r.rahul@razorpay.com"]
+
+# Get current user email (only works on Streamlit Community Cloud)
+user_email = st.experimental_user.email if st.experimental_user else None
+
+# Directory and file paths for saving data persistently
+DATA_DIR = "data"
+DEVICE_ORDER_FILE = os.path.join(DATA_DIR, "device_order_data.xlsx")
+FOS_MASTER_FILE = os.path.join(DATA_DIR, "fos_data.xlsx")
+TIMESTAMP_FILE = os.path.join(DATA_DIR, "timestamp.txt")
+
+# Set Streamlit page configuration
 st.set_page_config(page_title='Sales Dashboard', layout='wide')
 
-st.sidebar.header("Upload Files")
-device_order_data_file = st.sidebar.file_uploader("Upload Device Order Summary", type=['xls', 'xlsx'])
-fos_data_file = st.sidebar.file_uploader("Upload FOS Master Details", type=['xls', 'xlsx'])
+# Ensure data directory exists
+os.makedirs(DATA_DIR, exist_ok=True)
 
-# Read data only if files are uploaded
-device_order_data = pd.read_excel(device_order_data_file) if device_order_data_file else None
-fos_data = pd.read_excel(fos_data_file,sheet_name='FOS Master Details') if fos_data_file else None
+# Show upload option only for allowed users
+if user_email in ALLOWED_EMAILS:
+    st.sidebar.header("Upload Files")
+    device_order_data_file = st.sidebar.file_uploader("Upload Device Order Summary", type=['xls', 'xlsx'])
+    fos_data_file = st.sidebar.file_uploader("Upload FOS Master Details", type=['xls', 'xlsx'])
+
+    # If new files are uploaded, save them and update timestamp
+    if device_order_data_file:
+        with open(DEVICE_ORDER_FILE, "wb") as f:
+            f.write(device_order_data_file.getbuffer())
+        with open(TIMESTAMP_FILE, "w") as f:
+            f.write(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+    if fos_data_file:
+        with open(FOS_MASTER_FILE, "wb") as f:
+            f.write(fos_data_file.getbuffer())
+        with open(TIMESTAMP_FILE, "w") as f:
+            f.write(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+# Load data from saved files
+if os.path.exists(DEVICE_ORDER_FILE):
+    device_order_data = pd.read_excel(DEVICE_ORDER_FILE)
+else:
+    device_order_data = None
+
+if os.path.exists(FOS_MASTER_FILE):
+    fos_data = pd.read_excel(FOS_MASTER_FILE, sheet_name='FOS Master Details')
+else:
+    fos_data = None
+
+# Load last update timestamp
+if os.path.exists(TIMESTAMP_FILE):
+    with open(TIMESTAMP_FILE, "r") as f:
+        last_updated = f.read()
+else:
+    last_updated = "No data uploaded yet."
+
+if device_order_data is not None and fos_data is not None:
+    st.title("Razorpay Agent App Dashboard")
+    st.write(f"Showing the latest uploaded data (Last updated: {last_updated})")
+
+    
+
+
+
+# Process and display data (your existing logic goes here)
 
 if device_order_data is not None and fos_data is not None:
     st.sidebar.header("Filters")
@@ -22,7 +77,6 @@ if device_order_data is not None and fos_data is not None:
     
     device_order_data_selection = device_order_data.query("`BH_Name` == @bh & `Zone` == @zone & `device_model` == @device_model & `Reporting Manager` == @reporting_manager")
     
-    st.title("Razorpay Agent App Dashboard")
     st.markdown("##")
 
     device_order_data_selection['check'] = device_order_data_selection['merchant_id'].duplicated(keep='first').map({False: 'unique', True: 'duplicate'})
