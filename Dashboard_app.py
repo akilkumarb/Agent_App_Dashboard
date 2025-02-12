@@ -7,7 +7,15 @@ from datetime import datetime
 ALLOWED_EMAILS = ["akil.kumarb@razorpay.com", "r.rahul@razorpay.com"]
 
 # Get current user email (only works on Streamlit Community Cloud)
-user_email = st.experimental_user.email if st.experimental_user else None
+user_email = st.experimental_user.email if hasattr(st.experimental_user, "email") else None
+st.write(f"Logged in as: {user_email}")  # Debugging
+
+if user_email in ALLOWED_EMAILS:
+    st.sidebar.header("Upload Files")
+    device_order_data_file = st.sidebar.file_uploader("Upload Device Order Summary", type=['xls', 'xlsx'])
+    fos_data_file = st.sidebar.file_uploader("Upload FOS Master Details", type=['xls', 'xlsx'])
+else:
+    st.sidebar.write("You do not have upload access.")
 
 # Directory and file paths for saving data persistently
 DATA_DIR = "data"
