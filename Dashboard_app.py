@@ -218,5 +218,5 @@ if st.session_state.user_email:
         st.subheader('Device Order Summary Raw Data')
         st.dataframe(device_mis)
 
-        st.subheader('Funnel Query Raw Data')
-        st.dataframe(funnel_data)
+        #st.subheader('Funnel Query Raw Data')
+        #st.dataframe(funnel_data)
