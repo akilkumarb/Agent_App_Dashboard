@@ -78,7 +78,7 @@ if st.session_state.user_email:
         st.title("Razorpay Agent App Dashboard")
         st.write(f"Showing the latest uploaded data (Last updated: {last_updated})")
 
-        st.write('The Dashboard consits of logins done through Razorpay Agent App')
+        #st.write('The Dashboard consits of logins done through Razorpay Agent App')
 
     # Process and display data (your existing logic goes here)
 
