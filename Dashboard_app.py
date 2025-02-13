@@ -2,7 +2,8 @@ import streamlit as st
 import os
 import pandas as pd
 from datetime import datetime
-from pytz import timezone
+from pytz import timezone 
+
 
 # List of allowed email IDs for uploading
 ALLOWED_UPLOADERS = ["akil.kumarb@razorpay.com", "r.rahul@razorpay.com"]
@@ -12,7 +13,6 @@ DATA_DIR = "data"
 DEVICE_ORDER_FILE = os.path.join(DATA_DIR, "device_order_data.xlsx")
 FOS_MASTER_FILE = os.path.join(DATA_DIR, "fos_data.xlsx")
 TIMESTAMP_FILE = os.path.join(DATA_DIR, "timestamp.txt")
-
 # Set Streamlit page configuration
 st.set_page_config(page_title="Sales Dashboard", layout="wide")
 
@@ -39,20 +39,20 @@ if st.session_state.user_email:
         st.success("You have upload access.")
 
         st.sidebar.header("Upload Files")
-        device_order_data_file = st.sidebar.file_uploader("Upload Device Order Summary", type=["xls", "xlsx"])
-        fos_data_file = st.sidebar.file_uploader("Upload FOS Master Details", type=["xls", "xlsx"])
-
+        device_order_data_file = st.sidebar.file_uploader("Upload Device Order Summary File", type=["xls", "xlsx"])
+        fos_data_file = st.sidebar.file_uploader("Upload FOS Master Details File", type=["xls", "xlsx"])
+        #funnel_data_file=st.sidebar.file_uploader("Upload Funnel Data File", type=["xls", "xlsx"])
         if device_order_data_file:
             with open(DEVICE_ORDER_FILE, "wb") as f:
                 f.write(device_order_data_file.getbuffer())
             with open(TIMESTAMP_FILE, "w") as f:
                 f.write(datetime.now(timezone("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S"))
-
+            
         if fos_data_file:
             with open(FOS_MASTER_FILE, "wb") as f:
                 f.write(fos_data_file.getbuffer())
             with open(TIMESTAMP_FILE, "w") as f:
-                f.write(datetime.now(timezone("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S"))
+                f.write(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     else:
         st.warning("You have view-only access.")
 
@@ -66,7 +66,7 @@ if st.session_state.user_email:
         fos_data = pd.read_excel(FOS_MASTER_FILE, sheet_name="FOS Master Details")
     else:
         fos_data = None
-
+    
     # Load last update timestamp
     if os.path.exists(TIMESTAMP_FILE):
         with open(TIMESTAMP_FILE, "r") as f:
@@ -78,16 +78,18 @@ if st.session_state.user_email:
         st.title("Razorpay Agent App Dashboard")
         st.write(f"Showing the latest uploaded data (Last updated: {last_updated})")
 
+        st.write('The Dashboard consits of logins done through Razorpay Agent App')
+
     # Process and display data (your existing logic goes here)
 
     if device_order_data is not None and fos_data is not None:
         st.sidebar.header("Filters")
         bh = st.sidebar.multiselect("BH:", options=device_order_data["BH_Name"].unique(), default=device_order_data["BH_Name"].unique())
         zone = st.sidebar.multiselect("Zone:", options=device_order_data["Zone"].unique(), default=device_order_data["Zone"].unique())
-        device_model = st.sidebar.multiselect("Device model:", options=device_order_data["device_model"].unique(), default=device_order_data["device_model"].unique())
+        team=st.sidebar.multiselect("Team:",options=device_order_data['Team'].unique(),default=device_order_data['Team'].unique())
         reporting_manager = st.sidebar.multiselect("Reporting Manager:", options=device_order_data["Reporting Manager"].unique(), default=device_order_data["Reporting Manager"].unique())
-
-        device_order_data_selection = device_order_data.query("`BH_Name` == @bh & `Zone` == @zone & `device_model` == @device_model & `Reporting Manager` == @reporting_manager")
+        device_model = st.sidebar.multiselect("Device model:", options=device_order_data["device_model"].unique(), default=device_order_data["device_model"].unique())
+        device_order_data_selection = device_order_data.query("`BH_Name` == @bh & `Zone` == @zone & `Team`==@team & `device_model` == @device_model & `Reporting Manager` == @reporting_manager")
 
         st.markdown("##")
 
@@ -131,7 +133,7 @@ if st.session_state.user_email:
 
         #mis_summary_data=pd.merge(left=mis_data,right=device_order_data_selection,on=['BH_Name','Reporting Manager'],how='left')
         active_merchant_mis=device_mis[(device_mis['check']=='unique') & (~(device_mis['BH_Name']=='Test'))]
-        active_merchant_mis=active_merchant_mis.groupby(by=['BH_Name','Reporting Manager']).agg(
+        active_merchant_mis=active_merchant_mis.groupby(by=['BH_Name','Team','Reporting Manager']).agg(
         Till_Date_Cases=pd.NamedAgg(column='merchant_id',aggfunc='nunique'),KYC_qualified=pd.NamedAgg(column='pos_kyc_qualified_date',aggfunc='count'),
         Under_Review=pd.NamedAgg(column='pos_activation_status',aggfunc=lambda x: (x == 'under_review').sum()),
         Needs_clarification=pd.NamedAgg(column='pos_activation_status',aggfunc=lambda x: (x == 'needs_clarification').sum()),
@@ -180,7 +182,6 @@ if st.session_state.user_email:
                                  'TID_Generation_Pending':[active_merchant_mis['TID_Generation_Pending'].sum()],
                                  'Pending_Installation':[active_merchant_mis['Pending_Installation'].sum()]}, index=[('Total')])
             active_merchant_mis = pd.concat([active_merchant_mis, total_row])
-
         st.subheader('MIS Summary')
         st.dataframe(active_merchant_mis)
 
@@ -216,3 +217,6 @@ if st.session_state.user_email:
 
         st.subheader('Device Order Summary Raw Data')
         st.dataframe(device_mis)
+
+        st.subheader('Funnel Query Raw Data')
+        st.dataframe(funnel_data)
