@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import pandas as pd
 from datetime import datetime
+from pytz import timezone
 
 # List of allowed email IDs for uploading
 ALLOWED_UPLOADERS = ["akil.kumarb@razorpay.com", "r.rahul@razorpay.com"]
@@ -45,13 +46,13 @@ if st.session_state.user_email:
             with open(DEVICE_ORDER_FILE, "wb") as f:
                 f.write(device_order_data_file.getbuffer())
             with open(TIMESTAMP_FILE, "w") as f:
-                f.write(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                f.write(datetime.now(timezone("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S"))
 
         if fos_data_file:
             with open(FOS_MASTER_FILE, "wb") as f:
                 f.write(fos_data_file.getbuffer())
             with open(TIMESTAMP_FILE, "w") as f:
-                f.write(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                f.write(datetime.now(timezone("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S"))
     else:
         st.warning("You have view-only access.")
 
