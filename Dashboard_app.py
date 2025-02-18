@@ -52,7 +52,7 @@ if st.session_state.user_email:
             with open(FOS_MASTER_FILE, "wb") as f:
                 f.write(fos_data_file.getbuffer())
             with open(TIMESTAMP_FILE, "w") as f:
-                f.write(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                f.write(datetime.now(timezone("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S"))
     else:
         st.warning("You have view-only access.")
 
